@@ -1,0 +1,7 @@
+#!/usr/bin/env bats
+
+
+@test "trim whitespace prepended string" {
+    result="$(echo '    hello' | $BATS_TEST_DIRNAME/../src/trim)"
+    [[ "$result" = "hello" ]]
+}
