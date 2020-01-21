@@ -5,3 +5,20 @@
     result="$(echo '    hello' | $BATS_TEST_DIRNAME/../src/trim)"
     [[ "$result" = "hello" ]]
 }
+
+@test "trim whitespace appended string" {
+    result="$(echo 'hello     ' | $BATS_TEST_DIRNAME/../src/trim)"
+    [[ "$result" = "hello" ]]
+}
+
+@test "trim whitespace prepended string with mixed characters" {
+    result="$(printf '\t   \t hello' | $BATS_TEST_DIRNAME/../src/trim)"
+    [[ "$result" = "hello" ]]
+}
+
+@test "trim whitespace appended string with mixed characters" {
+    result="$(printf 'hello \t \t ' | $BATS_TEST_DIRNAME/../src/trim)"
+    [[ "$result" = "hello" ]]
+}
+
+
