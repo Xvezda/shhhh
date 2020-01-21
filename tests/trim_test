@@ -1,24 +1,28 @@
 #!/usr/bin/env bats
 
+trim_path="$BATS_TEST_DIRNAME/../src/trim"
 
 @test "trim whitespace prepended string" {
-    result="$(echo '    hello' | $BATS_TEST_DIRNAME/../src/trim)"
-    [[ "$result" = "hello" ]]
+    result="$(echo '    hello' | $trim_path)"
+    [ "$result" = "hello" ]
 }
 
 @test "trim whitespace appended string" {
-    result="$(echo 'hello     ' | $BATS_TEST_DIRNAME/../src/trim)"
-    [[ "$result" = "hello" ]]
+    result="$(echo 'hello     ' | $trim_path)"
+    [ "$result" = "hello" ]
 }
 
 @test "trim whitespace prepended string with mixed characters" {
-    result="$(printf '\t   \t hello' | $BATS_TEST_DIRNAME/../src/trim)"
-    [[ "$result" = "hello" ]]
+    result="$(printf '\t   \t hello' | $trim_path)"
+    [ "$result" = "hello" ]
 }
 
 @test "trim whitespace appended string with mixed characters" {
-    result="$(printf 'hello \t \t ' | $BATS_TEST_DIRNAME/../src/trim)"
-    [[ "$result" = "hello" ]]
+    result="$(printf 'hello \t \t ' | $trim_path)"
+    [ "$result" = "hello" ]
 }
 
-
+@test "trim whitespace on both sides" {
+    result="$(printf '\t\t\thello   \t ' | $trim_path)"
+    [ "$result" = "hello" ]
+}
