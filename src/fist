@@ -88,9 +88,7 @@ def main():
         obj['files'][filename] = {}
         obj['files'][filename]['content'] = text
     else:
-        print('from files:')
         for file_ in args.files:
-            print('=', file_, '=')
             with open(file_, 'r') as f:
                 filename = os.path.basename(file_)
                 obj['files'][filename] = {}

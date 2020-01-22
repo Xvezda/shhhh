@@ -1,2 +1,6 @@
 .env
 env/
+*.gif
+*.png
+*.jpg
+*.jpeg
