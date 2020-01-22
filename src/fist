@@ -16,9 +16,15 @@ from __future__ import unicode_literals
 import os
 import sys
 import json
+import base64
+import string
 import argparse
+import subprocess
 
 
+REPO_URL = 'https://github.com/Xvezda/fist'
+FIST_MSG = 'Created by fist; The fast gist uploader - %s' % (REPO_URL,)
+GIST_HOST = 'gist.github.com'
 GIST_API_URL = 'https://api.github.com/gists'
 
 # Overwrite unsafe input
@@ -54,7 +60,18 @@ def escape_dquote(text):
     return text.replace('"', '\\"')
 
 
+def call_with_cwd(cmd, cwd='', **kwargs):
+    if not cwd:
+        subprocess.call(cmd, shell=True, **kwargs)
+    else:
+        subprocess.call('(cd %s && %s)' % (cwd, cmd), shell=True, **kwargs)
+
+
 def main():
+    if sys.version_info[:2] < (2, 3):
+        print_stderr('Python version is too low.')
+        return 1
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--dry', '-d', action='store_true')
@@ -74,6 +91,8 @@ def main():
     obj = {
         'files': {},
     }
+    binaries = []
+
     if not args.files:
         text = sys.stdin.read()
         sys.stdin.close()
@@ -89,13 +108,24 @@ def main():
         obj['files'][filename]['content'] = text
     else:
         for file_ in args.files:
-            with open(file_, 'r') as f:
+            with open(file_, 'rb') as f:
                 filename = os.path.basename(file_)
-                obj['files'][filename] = {}
-                obj['files'][filename]['content'] = f.read()
+                content = f.read()
+                if any(c not in string.printable for c in content):
+                    # print_stderr('File "%s" is binary' % (filename,))
+                    # return 1
+                    binaries.append(file_)
+                    continue
+                else:
+                    obj['files'][filename] = {}
+                    obj['files'][filename]['content'] = content
+        if not obj['files']:
+            obj['files']['README.txt'] = {}
+            obj['files']['README.txt']['content'] = '# %s' % (FIST_MSG,)
+
     description = input('description (optional): ')
     if not description:
-        pass
+        obj['description'] = FIST_MSG
     else:
         obj['description'] = description
 
@@ -114,9 +144,8 @@ def main():
     else:
         username = args.user
 
-    import base64
     credential = ':'.join([username, token])
-    authkey = base64.encodestring(credential)[:-1]
+    authkey = base64.b64encode(credential)
 
     headers = {
         'Content-Type': 'application/json',
@@ -132,7 +161,7 @@ def main():
         if args.verbose:
             print('[Verbose] Authorization: Basic %s (base64)' % (credential,))
         print()
-        print(json.dumps(obj))
+        print(json.dumps(obj, ensure_ascii=False))
         return 0
 
     try:
@@ -143,7 +172,6 @@ def main():
                 print('[Verbose] requested by requests module')
             return response.text
     except ImportError:
-        import subprocess
         def send(content):
             command = ['curl', '-s', '-X', 'POST']
             for key in headers:
@@ -158,8 +186,35 @@ def main():
                 print('[Verbose] requested by command line curl')
             return subprocess.check_output(shlex.split(' '.join(command)))
 
-    r = send(json.dumps(obj))
+    r = send(json.dumps(obj, ensure_ascii=False))
+    if args.verbose:
+        print(r)
     result = json.loads(r)
+
+    if binaries:
+        import tempfile
+        temppath = tempfile.mkdtemp()
+        try:
+            if args.verbose:
+                print('[Verbose] tempdir created: %s' % (temppath,))
+            id_ = result.get('id')
+            gist_repo_url = 'https://%s@%s/%s.git' % (credential, GIST_HOST, id_)
+            call_with_cwd('git clone %s' % (gist_repo_url,),
+                          cwd=temppath)
+            for binary in binaries:
+                cppath = os.path.join(temppath, id_, os.path.basename(binary))
+                call_with_cwd('cp %s %s' % (binary, cppath))
+            call_with_cwd('git add .', cwd=os.path.join(temppath, id_))
+            call_with_cwd('git commit -m "Add binaries"',
+                          cwd=os.path.join(temppath, id_))
+            call_with_cwd('git push origin master',
+                          cwd=os.path.join(temppath, id_))
+        except Exception as e:
+            print_stderr(str(e))
+            return 1
+        finally:
+            import shutil
+            shutil.rmtree(temppath)
 
     print(result.get('html_url'))
 
