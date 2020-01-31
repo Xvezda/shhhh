@@ -5,12 +5,12 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-PROGNAME="exmv"
+PROGRAM="exmv"
 VERSION="1.0"
 
 
 function echoerr() {
-    1>&2 echo "$PROGNAME: $@"
+    1>&2 echo "$PROGRAM: $@"
 }
 
 
@@ -24,7 +24,7 @@ function compat() {
 
 function usage() {
     cat <<EOD
-$PROGNAME; exclude mv tool, version $VERSION
+$PROGRAM; exclude mv tool, version $VERSION
 
 usage: $0 [options ...] [patterns ...] <target>
 
@@ -65,7 +65,7 @@ cmd=""
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --dry|-d)
-            cmd="echo 'mv'"
+            cmd="echo mv"
             shift
             ;;
         -[a-z]|--[a-z]*)
@@ -82,4 +82,4 @@ while [ "$#" -gt 0 ]; do
 done
 
 
-ls -1 | eval "grep -v $options" | xargs -I{} ${cmd:-mv} {} $target
+ls -1 | eval "grep -v $options" | xargs -I{} ${cmd:-mv} "{}" "$target"
