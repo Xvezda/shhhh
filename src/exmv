@@ -72,8 +72,12 @@ while [ "$#" -gt 0 ]; do
             echoerr "illegal option -- $1"
             exit 1
             ;;
-        --|*)
-            break ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break;;
     esac
 done
 
