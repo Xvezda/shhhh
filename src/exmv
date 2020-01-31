@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# Copyright (c) 2020 Xvezda <https://xvezda.com/>
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+PROGNAME="exmv"
+VERSION="1.0"
+
+
+function echoerr() {
+    1>&2 echo "$PROGNAME: $@"
+}
+
+
+function compat() {
+    if [ -z "$BASH_ARGV" ]; then
+        for i; do :; done
+        BASH_ARGV="$i"
+    fi
+}
+
+
+function usage() {
+    cat <<EOD
+$PROGNAME; exclude mv tool, version $VERSION
+
+usage: $0 [options ...] [patterns ...] <target>
+
+options:
+    -d, --dry      dry run
+
+patterns:
+    file names or glob patterns to exclude
+    (if no patterns given: all files will be move to target)
+EOD
+}
+
+
+if [ "$#" -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+# Set compatible
+compat
+# Declare variables
+declare -a patterns=($@)
+target="$BASH_ARGV"
+
+# Exit when target is not a directory
+if [ ! -d "$target" ]; then
+    echoerr "target '$target' is not a directory."
+    exit 1
+fi
+
+# Build option arguments
+options=""
+for pattern in "${patterns[@]}"; do
+    options="${options}-e '$pattern' "
+done
+
+cmd=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --dry|-d)
+            cmd="echo 'mv'"
+            shift
+            ;;
+        -[a-z]|--[a-z]*)
+            echoerr "illegal option -- $1"
+            exit 1
+            ;;
+        --|*)
+            break ;;
+    esac
+done
+
+
+ls -1 | eval "grep -v $options" | xargs -I{} ${cmd:-mv} {} $target
