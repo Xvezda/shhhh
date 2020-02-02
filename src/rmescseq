@@ -5,4 +5,4 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-sed -E 's/\x1b\[[0-9~;]*[a-zA-Z]//g'
+sed -E 's/\x1b\[([0-9~;]*[a-zA-Z])?//g'
