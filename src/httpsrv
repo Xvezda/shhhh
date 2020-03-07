@@ -8,6 +8,7 @@
 
 
 ARGS=$*
+SERVER_HOST="0.0.0.0"
 SERVER_PORT=8000
 
 function debug_print() {
@@ -42,5 +43,5 @@ if [ ! -z "$(type python)" ]; then
 elif [ ! -z "$(type python3)" ]; then
     python3 -m http.server "$SERVER_PORT"
 elif [ ! -z "$(type php)" ]; then
-    php -S "$SERVER_PORT"
+    php -S "$SERVER_HOST:$SERVER_PORT"
 fi
