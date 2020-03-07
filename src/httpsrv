@@ -6,14 +6,41 @@
 # https://opensource.org/licenses/MIT.
 
 
-SERVER_PORT=
 
-exit
+ARGS=$*
+SERVER_PORT=8000
+
+function debug_print() {
+    if [ ! -z "$DEBUG" ]; then
+        echo "$@"
+    fi
+}
+
+function usage() {
+    echo "usage: $0 [-h] [-p [PORT]]"
+}
+
+while getopts p:h ARGS; do
+    case $ARGS in
+        p)
+            SERVER_PORT=$OPTARG
+            ;;
+        h)
+            usage
+            exit 1
+            ;;
+        \?)
+            exit 1
+            ;;
+    esac
+done
+
+debug_print "PORT: $SERVER_PORT"
 
 if [ ! -z "$(type python)" ]; then
-    python -m SimpleHTTPServer
+    python -m SimpleHTTPServer "$SERVER_PORT"
 elif [ ! -z "$(type python3)" ]; then
-    python3 -m http.server
+    python3 -m http.server "$SERVER_PORT"
 elif [ ! -z "$(type php)" ]; then
-    php -S $SERVER_PORT
+    php -S "$SERVER_PORT"
 fi
