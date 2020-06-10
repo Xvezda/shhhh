@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Copyright (c) 2020 Xvezda <https://xvezda.com/>
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+function main() {
+    if [ -z "$1" ]; then
+        echo "usage: $0 [files ...]"
+        return 1
+    fi
+    local gpg_prog
+    gpg_prog="$(type gpg2 &>/dev/null && echo gpg2 || echo gpg)"
+
+    local userid
+    local passphrase
+
+    read -p 'Enter User ID: ' userid
+
+    read -p 'Enter passphrase: ' -s passphrase
+
+    for arg in "$@"; do
+        if [ ! -e $arg ]; then
+            return 1
+        fi
+        "$gpg_prog" -r "$userid" --passphrase "$passphrase" --symmetric --encrypt --cipher-algo AES256 --compression-algo BZIP2 "$arg" &
+    done
+    echo
+    echo "Encrypting $# files..."
+    wait
+    echo "Done!"
+}
+
+main "$@"
